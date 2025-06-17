@@ -1,33 +1,33 @@
-class StackEmptyError(Exception):
+class StackEmptyError(Exception): # класс исключения для создания собственного типа ошибки
     pass
 
 
-class Stack:
+class Stack: # класс стека
     def __init__(self):
-        self._items = []
+        self._items = [] # хранение элементов стека
 
     def push(self, item):
-        self._items.append(item)
+        self._items.append(item) # добавление элемента в стек
 
     def pop(self):
         if self.is_empty():
             raise StackEmptyError("Попытка извлечь элемент из пустого стека.")
-        return self._items.pop()
+        return self._items.pop() # извлечение элемента из стека
 
     def peek(self):
         if self.is_empty():
             raise StackEmptyError("Попытка посмотреть верхушку пустого стека.")
-        return self._items[-1]
+        return self._items[-1] # просмотр верхнего элемента
 
     def is_empty(self):
-        return len(self._items) == 0
+        return len(self._items) == 0 # проверка стека на пустоту
 
     def size(self):
-        return len(self._items)
+        return len(self._items) # размер стека
 
 
-class MathOperations:
-    @staticmethod
+class MathOperations: # класс для нахождения минимума/максимума
+    @staticmethod # декоратор для того, чтобы можно было использовать функцию без создания экземпляра класса
     def custom_min(a, b):
         if a < b:
             return a
@@ -40,43 +40,43 @@ class MathOperations:
         return b
 
 
-class ExpressionEvaluator:
+class ExpressionEvaluator: # класс для вычисления выражения из стека
     def __init__(self, expression):
-        self.expression = expression
-        self.stack = Stack()
+        self.expression = expression # сохранение строки
+        self.stack = Stack() # инициализация стека
 
     def evaluate(self):
         i = 0
-        while i < len(self.expression):
+        while i < len(self.expression): # посимвольное чтение строки
             char = self.expression[i]
-            if char.isdigit():
+            if char.isdigit(): # если символ - число
                 num = ''
-                while i < len(self.expression) and self.expression[i].isdigit():
+                while i < len(self.expression) and self.expression[i].isdigit(): # собираем число целиком
                     num += self.expression[i]
                     i += 1
-                self.stack.push(int(num))
-                continue  # не увеличиваем i здесь, т.к. он уже инкрементирован
+                self.stack.push(int(num)) # добавляем число в стек
+                continue
             elif char in ('m', 'M', '(', ',', ')'):
                 self.stack.push(char)
             i += 1
 
-        return self._process_stack()
+        return self._process_stack() # обработка стека
 
     def _process_stack(self):
         temp_stack = Stack()
 
-        while not self.stack.is_empty():
+        while not self.stack.is_empty(): # рассматриваем стек в обратном порядке
             token = self.stack.pop()
             temp_stack.push(token)
 
-        return self._evaluate_tokens(temp_stack)
+        return self._evaluate_tokens(temp_stack) # обработка стека
 
-    def _evaluate_tokens(self, tokens: Stack):
+    def _evaluate_tokens(self, tokens):
         while tokens.size() > 1:
             temp = Stack()
             while not tokens.is_empty():
                 token = tokens.pop()
-                if token == ')':
+                if token == ')': # если нашли закрывающую скобку, начинаем собирать выражение
                     arg2 = temp.pop()
                     comma = temp.pop()
                     arg1 = temp.pop()
@@ -90,7 +90,7 @@ class ExpressionEvaluator:
                     else:
                         raise ValueError(f"Неизвестная операция: {func}")
 
-                    temp.push(result)
+                    temp.push(result) # результат операции добавляем обратно в стек
                 else:
                     temp.push(token)
 
