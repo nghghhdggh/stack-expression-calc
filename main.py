@@ -2,28 +2,40 @@ class StackEmptyError(Exception): # класс исключения для со�
     pass
 
 
+class StackNode:
+    def __init__(self, value, next_node=None):
+        self.value = value
+        self.next = next_node
+
+
 class Stack: # класс стека
     def __init__(self):
-        self._items = [] # хранение элементов стека
+        self.top = None
+        self._size = 0
 
     def push(self, item):
-        self._items.append(item) # добавление элемента в стек
+        new_node = StackNode(item, self.top)
+        self.top = new_node
+        self._size += 1
 
     def pop(self):
         if self.is_empty():
             raise StackEmptyError("Попытка извлечь элемент из пустого стека.")
-        return self._items.pop() # извлечение элемента из стека
+        value = self.top.value
+        self.top = self.top.next
+        self._size -= 1
+        return value
 
     def peek(self):
         if self.is_empty():
             raise StackEmptyError("Попытка посмотреть верхушку пустого стека.")
-        return self._items[-1] # просмотр верхнего элемента
+        return self.top.value
 
     def is_empty(self):
-        return len(self._items) == 0 # проверка стека на пустоту
+        return self.top is None
 
     def size(self):
-        return len(self._items) # размер стека
+        return self._size
 
 
 class MathOperations: # класс для нахождения минимума/максимума
@@ -40,12 +52,39 @@ class MathOperations: # класс для нахождения минимума/
         return b
 
 
-class ExpressionEvaluator: # класс для вычисления выражения из стека
+class ExpressionEvaluator: # класс для вычисления/ выражения из стека
     def __init__(self, expression):
         self.expression = expression # сохранение строки
         self.stack = Stack() # инициализация стека
 
+    def _validate_expression(self):
+        allowed_chars = set("mM0123456789(),")
+        for char in self.expression:
+            if char not in allowed_chars:
+                raise ValueError(f"Недопустимый символ: {char}")
+
+        # Проверка сбалансированности скобок
+        balance = 0
+        for char in self.expression:
+            if char == '(':
+                balance += 1
+            elif char == ')':
+                balance -= 1
+            # Скобки закрываются до открытия — ошибка
+            if balance < 0:
+                raise ValueError("Скобки расставлены неправильно.")
+        
+        if balance != 0:
+            raise ValueError("Несбалансированное количество скобок.")
+        
+        if not any(c.isdigit() for c in self.expression):
+            raise ValueError("Выражение не содержит чисел.")
+        
+        if not any(c in "mM" for c in self.expression):
+            raise ValueError("Выражение не содержит операций m или M.")
+
     def evaluate(self):
+        self._validate_expression()
         i = 0
         while i < len(self.expression): # посимвольное чтение строки
             char = self.expression[i]
@@ -77,11 +116,14 @@ class ExpressionEvaluator: # класс для вычисления выраже
             while not tokens.is_empty():
                 token = tokens.pop()
                 if token == ')': # если нашли закрывающую скобку, начинаем собирать выражение
-                    arg2 = temp.pop()
-                    comma = temp.pop()
-                    arg1 = temp.pop()
-                    open_bracket = temp.pop()
-                    func = temp.pop()
+                    try:
+                        arg2 = temp.pop()
+                        comma = temp.pop()
+                        arg1 = temp.pop()
+                        open_bracket = temp.pop()
+                        func = temp.pop()
+                    except StackEmptyError:
+                        raise ValueError('Некорректное выражение: недостаточно символов.')
 
                     if func == 'm':
                         result = MathOperations.custom_min(arg1, arg2)
@@ -96,14 +138,19 @@ class ExpressionEvaluator: # класс для вычисления выраже
 
             tokens = temp
 
+        if tokens.is_empty():
+            raise ValueError('Некорректное выражение.')
         return tokens.pop()
 
 
 if __name__ == "__main__":
-    try:
-        expression = input("Введите выражение (например, M(15,m(16,8))): ")
-        evaluator = ExpressionEvaluator(expression)
-        result = evaluator.evaluate()
-        print(f"Результат: {result}")
-    except Exception as e:
-        print(f"Ошибка: {e}")
+    while True:
+        try:
+            expression = input("Введите выражение (например, M(15,m(16,8))): ")
+            evaluator = ExpressionEvaluator(expression)
+            result = evaluator.evaluate()
+            print(f"Результат: {result}")
+            break
+        except Exception as e:
+            print(f"Ошибка: {e}")
+            print('Введите данные снова.')
